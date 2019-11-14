@@ -1,0 +1,217 @@
+
+<!DOCTYPE html>
+<html lang='en'>
+  <head>
+    <meta charset='utf-8'/>
+
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/4.2.0/core/main.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/4.2.0/daygrid/main.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/4.2.0/timegrid/main.min.css" >
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/4.2.0/core/main.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/4.2.0/daygrid/main.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/4.2.0/timegrid/main.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/4.2.0/interaction/main.js"></script>
+  </head>
+  <body>
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-8">
+                <div id='calendar'></div>
+                <div class="mt-3">
+                    <div class="h6">Select</div>
+                    <div id="select-list" class="d-flex row">
+                    </div>
+                </div>
+                <form class="mt-3">
+                    <div class="form-group">
+                        <label for="message">Message</label>
+                        <textarea id="message" name="message" class="form-control" rows="5"></textarea>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+    <script>
+            document.addEventListener('DOMContentLoaded', function() {
+
+              var eventList = [
+                        {
+                            "id": 1,
+                            "title": "犬の散歩",
+                            "start":"2019-11-15T15:00:00+00:00", // 11/8 15~16
+                            "end":"2019-11-15T16:00:00+00:00",
+                            "backgroundColor":"#edf2fa"
+                        },
+                ];
+
+              var render = function () {
+                    parent = document.getElementById('select-list');
+                    parent.innerHTML = '';
+                    let buff = "";
+                    eventList.forEach(function(event, index) {
+                        buff = buff + "<div class='badge badge-info mr-2'>"+event.start+"</div>";
+                    });
+                    parent.innerHTML= buff;
+              }
+
+              render();
+
+              var calendarEl = document.getElementById('calendar');
+              var calendar = new FullCalendar.Calendar(calendarEl, {
+                    plugins: [ 'interaction', 'timeGrid' ],
+                    // 現在時刻を赤線で表示
+                    nowIndicator: true,
+                    // 範囲選択可能
+                    selectable: true,
+                    // 1週間表示
+                    defaultView: 'timeGridWeek',
+                    // 30分間隔で表示
+                    slotDuration: '00:30:00',
+                    // カレンダーの範囲
+                    minTime: '09:00:00',
+                    maxTime: '24:00:00',
+
+                    // 横軸のラベル
+                    // https://fullcalendar.io/docs/date-formatting
+                    slotLabelFormat: {
+                        hour: '2-digit',　// 00:00　
+                        minute: '2-digit',
+                        omitZeroMinute: false,
+                        meridiem: false, // AM:PMとか
+                        hour12: false // 24時間表記
+                    },
+
+                    // イベント時間の表記
+                    // https://fullcalendar.io/docs/eventTimeFormat
+                    eventTimeFormat: {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        omitZeroMinute: false,
+                        meridiem: false,
+                        hour12: false
+                    },
+
+                    // https://fullcalendar.io/docs/event-dragging-resizing
+                    // ドラッグ＆ドロップでイベントの長さを変更できる
+                    editable: true,
+                    // ドラッグ＆ドロップでイベントの位置で変更できる
+                    eventStartEditable: true,
+                    eventResizableFromStart: true,
+                    eventDurationEditable: true,
+                    droppable: true,
+
+                    // イベント
+                    select: function(info) {
+                        // 追加
+                        eventList.push(
+                            {
+                                "id": eventList.length + 1,
+                                "start": info.startStr,
+                                "end": info.endStr,
+                            }
+                        );
+                        // レンダリング
+                        calendar.removeAllEvents();
+                        calendar.addEventSource(eventList);
+                        calendar.rerenderEvents();
+
+                        render();
+
+                        console.log(eventList);
+                        // Todo Ajaxでinfoを投げる
+                    },
+                    eventClick: function (info) {
+                        // alert(
+                        //     info.start+'\n'
+                        //     + info.end+'\n'
+                        //     + info.startStr+'\n'
+                        //     + info.endStr+'\n'
+                        // );
+
+                        // 削除
+                        eventList.forEach(function(event, index) {
+                          if (info.event.id == event.id) {
+                            eventList.splice(index, 1);
+                          }
+                        });
+                        // レンダリング
+                        calendar.removeAllEvents();
+                        calendar.addEventSource(eventList);
+                        calendar.rerenderEvents();
+
+                        render();
+                    },
+                    eventDragStop: function(info) {
+                        // https://fullcalendar.io/docs/date-object
+                        alert(
+                            info.event.start+'\n'
+                            + info.event.end+'\n'
+                            + info.event.start.toISOString()+'\n'
+                            + info.event.end.toISOString()+'\n'
+                        );
+                        console.log(info);
+                    },
+                    eventResizeStop: function(info) {
+                        alert(
+                            info.event.start+'\n'
+                            + info.event.end+'\n'
+                            + info.event.start.toISOString()+'\n'
+                            + info.event.end.toISOString()+'\n'
+                        );
+                        console.log(info);
+                    },
+
+                    // カスタムボタン
+                    customButtons: {
+                        hoge: {
+                            text: 'hoge!',
+                            // icon: 'fa fa-trash-o',
+                            click: function () {
+                                alert('hoge!');
+                            }
+                        },
+                        fuga: {
+                            text: 'fuga!',
+                            // icon: 'fa fa-clock-o',
+                            click: function () {
+                                alert('fuga!');
+                            }
+                        },
+                        piyo: {
+                            text: 'piyo!',
+                            // icon: 'fa fa-clock-o',
+                            click: function () {
+                                alert('piyo!');
+                            }
+                        },
+                    },
+                    // カスタムボタンとか決まったUIの配置
+                    // https://fullcalendar.io/docs/header
+                    // https://fullcalendar.io/docs/header
+                    header: {
+                        left: 'title',
+                        center: 'hoge',
+                        right: 'today fuga piyo prev,next'
+                    },
+
+                    // タイムゾーンとイベント時刻
+                    // https://fullcalendar.io/docs/event-object
+                    // https://fullcalendar.io/docs/timeZone
+                    timeZone: 'Asia/Tokyo',
+                    events: eventList,
+              });
+
+              calendar.render();
+            });
+
+          </script>
+
+  </body>
+</html>
